@@ -81,3 +81,6 @@ export const getCategories = () =>
 
 export const getStatus = () =>
   apiFetch<StatusInfo>("/status", { next: { revalidate: 60 } });
+
+export const getAllStrains = () =>
+  apiFetch<PopularStrain[]>("/strains/all", { next: { revalidate: 3600 } });

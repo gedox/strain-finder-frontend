@@ -2,35 +2,46 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getShops, getPopular } from "@/lib/api";
-import type { Shop, PopularStrain } from "@/lib/api";
+import { getAllStrains, getPopular } from "@/lib/api";
+import type { PopularStrain } from "@/lib/api";
 import AlphaNav from "@/components/AlphaNav";
-import ShopCard from "@/components/ShopCard";
 import CategoryFilter from "@/components/CategoryFilter";
 import { CAT_COLORS } from "@/lib/colors";
 
 export default function BrowsePage() {
   const router = useRouter();
-  const [shops, setShops] = useState<Shop[]>([]);
+  const [allStrains, setAllStrains] = useState<PopularStrain[]>([]);
   const [popular, setPopular] = useState<PopularStrain[]>([]);
   const [activeLetter, setActiveLetter] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const letterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    getShops().then(setShops).catch(() => {});
+    getAllStrains().then(setAllStrains).catch(() => {});
     getPopular().then(setPopular).catch(() => {});
   }, []);
 
-  // Group shops by first letter
-  const shopsByLetter: Record<string, Shop[]> = {};
-  shops.forEach((shop) => {
-    const letter = shop.name.charAt(0).toUpperCase();
-    if (!shopsByLetter[letter]) shopsByLetter[letter] = [];
-    shopsByLetter[letter].push(shop);
+  const toDisplayName = (name: string) =>
+    name
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  // Filter strains by category
+  const filteredStrains =
+    activeCategory === "all"
+      ? allStrains
+      : allStrains.filter((s) => s.category === activeCategory);
+
+  // Group strains by first letter
+  const strainsByLetter: Record<string, PopularStrain[]> = {};
+  filteredStrains.forEach((strain) => {
+    const letter = strain.name_normalized.charAt(0).toUpperCase();
+    if (!strainsByLetter[letter]) strainsByLetter[letter] = [];
+    strainsByLetter[letter].push(strain);
   });
 
-  const availableLetters = new Set(Object.keys(shopsByLetter));
+  const availableLetters = new Set(Object.keys(strainsByLetter));
 
   const handleLetterSelect = (letter: string) => {
     setActiveLetter(letter);
@@ -44,7 +55,10 @@ export default function BrowsePage() {
       ? popular
       : popular.filter((s) => s.category === activeCategory);
 
-  const categories = ["all", ...Array.from(new Set(popular.map((s) => s.category)))];
+  const categories = [
+    "all",
+    ...Array.from(new Set(allStrains.map((s) => s.category))),
+  ];
 
   const handleStrainClick = (name: string) => {
     router.push(`/?q=${encodeURIComponent(name)}`);
@@ -70,7 +84,7 @@ export default function BrowsePage() {
           <span style={{ width: 32, height: 1, background: "rgba(200,240,96,0.3)", display: "inline-block" }} />
           <span style={{
             fontSize: 11,
-            letterSpacing: "0.2em",
+            letterSpacing: "0.1em",
             textTransform: "uppercase",
             color: "rgba(240,237,230,0.3)",
           }}>
@@ -83,11 +97,11 @@ export default function BrowsePage() {
           fontWeight: 700,
           marginBottom: 8,
         }}>
-          Browse Strains &amp; Shops
+          Browse Strains
         </h1>
       </div>
 
-      {/* Popular strains with category filter */}
+      {/* Popular strains */}
       {popular.length > 0 && (
         <div style={{ marginBottom: 48 }}>
           <div style={{
@@ -100,43 +114,30 @@ export default function BrowsePage() {
             &mdash; popular strains
           </div>
 
-          <CategoryFilter
-            categories={categories}
-            active={activeCategory}
-            onSelect={setActiveCategory}
-          />
-
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {filteredPopular.map((s, i) => {
-              const displayName = s.name_normalized
-                .split(" ")
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" ");
-
-              return (
-                <div
-                  key={i}
-                  className="popular-tag"
-                  onClick={() => handleStrainClick(displayName)}
-                >
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: CAT_COLORS[s.category]?.bg || "#888",
-                    display: "inline-block",
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ fontSize: 12 }}>{displayName}</span>
-                  <span style={{ fontSize: 10, color: "rgba(240,237,230,0.3)" }}>
-                    {s.shop_count} shop{s.shop_count !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              );
-            })}
+            {filteredPopular.map((s, i) => (
+              <div
+                key={i}
+                className="popular-tag"
+                onClick={() => handleStrainClick(toDisplayName(s.name_normalized))}
+              >
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: CAT_COLORS[s.category]?.bg || "#888",
+                  display: "inline-block",
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 12 }}>{toDisplayName(s.name_normalized)}</span>
+                <span style={{ fontSize: 10, color: "rgba(240,237,230,0.3)" }}>
+                  {s.shop_count} shop{s.shop_count !== 1 ? "s" : ""}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Shops A-Z */}
+      {/* Category filter + Strains A-Z */}
       <div style={{ marginBottom: 40 }}>
         <div style={{
           fontSize: 11,
@@ -145,8 +146,14 @@ export default function BrowsePage() {
           color: "rgba(240,237,230,0.3)",
           marginBottom: 16,
         }}>
-          &mdash; coffeeshops A&ndash;Z
+          &mdash; all strains A&ndash;Z
         </div>
+
+        <CategoryFilter
+          categories={categories}
+          active={activeCategory}
+          onSelect={setActiveCategory}
+        />
 
         <AlphaNav
           activeLetter={activeLetter}
@@ -155,7 +162,7 @@ export default function BrowsePage() {
         />
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {Object.keys(shopsByLetter)
+          {Object.keys(strainsByLetter)
             .sort()
             .map((letter) => (
               <div
@@ -173,8 +180,43 @@ export default function BrowsePage() {
                   {letter}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  {shopsByLetter[letter].map((shop) => (
-                    <ShopCard key={shop.slug} shop={shop} />
+                  {strainsByLetter[letter].map((strain, i) => (
+                    <div
+                      key={i}
+                      onClick={() => handleStrainClick(toDisplayName(strain.name_normalized))}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        background: "rgba(240,237,230,0.03)",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(240,237,230,0.07)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(240,237,230,0.03)")}
+                    >
+                      <span style={{
+                        width: 8, height: 8, borderRadius: "50%",
+                        background: CAT_COLORS[strain.category]?.bg || "#888",
+                        flexShrink: 0,
+                      }} />
+                      <span style={{ fontSize: 14, flex: 1 }}>
+                        {toDisplayName(strain.name_normalized)}
+                      </span>
+                      <span style={{
+                        fontSize: 11,
+                        color: "rgba(240,237,230,0.3)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}>
+                        {strain.category}
+                      </span>
+                      <span style={{ fontSize: 11, color: "rgba(240,237,230,0.3)" }}>
+                        {strain.shop_count} shop{strain.shop_count !== 1 ? "s" : ""}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
