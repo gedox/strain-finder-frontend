@@ -1,26 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0D0D0D;
+  color: #F0EDE6;
+  font-family: 'DM Mono', 'Courier New', monospace;
+  min-height: 100vh;
+}
+
+/* Grain overlay */
+.grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 100;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.35;
+}
+
+/* Ambient glow orbs */
+.glow-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 20s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* Search input */
+.search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-style: italic;
+  color: #F0EDE6;
+  caret-color: #C8F060;
+  padding: 0;
+}
+.search-input::placeholder { color: transparent; }
+
+.search-wrapper {
+  position: relative;
+  border-bottom: 1px solid rgba(200, 240, 96, 0.3);
+  padding-bottom: 16px;
+  cursor: text;
+}
+.search-wrapper:focus-within {
+  border-bottom-color: #C8F060;
+}
+
+/* Result cards */
+.result-card {
+  border: 1px solid rgba(240, 237, 230, 0.08);
+  border-radius: 2px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+  animation: slideIn 0.3s ease forwards;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.result-card:hover {
+  background: rgba(200, 240, 96, 0.05);
+  border-color: rgba(200, 240, 96, 0.2);
+}
+
+@keyframes slideIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Category pill */
+.pill {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Filter buttons */
+.filter-btn {
+  background: transparent;
+  border: 1px solid rgba(240,237,230,0.15);
+  color: rgba(240,237,230,0.5);
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn:hover, .filter-btn.active {
+  border-color: #C8F060;
+  color: #C8F060;
+  background: rgba(200, 240, 96, 0.07);
+}
+
+/* Popular strain tags */
+.popular-tag {
+  padding: 8px 14px;
+  border: 1px solid rgba(240,237,230,0.1);
+  border-radius: 2px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.01);
+}
+.popular-tag:hover {
+  border-color: rgba(200, 240, 96, 0.4);
+  background: rgba(200, 240, 96, 0.04);
+  color: #C8F060;
+}
+
+/* Blinking cursor */
+.cursor-blink {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background: #C8F060;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Loading bar */
+.loading-bar {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #C8F060, transparent);
+  animation: scan 0.6s ease infinite;
+}
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(200, 240, 96, 0.2); border-radius: 2px; }
+
+/* Alpha nav */
+.alpha-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  border: 1px solid rgba(240,237,230,0.1);
+  border-radius: 2px;
+  background: transparent;
+  color: rgba(240,237,230,0.4);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.alpha-btn:hover, .alpha-btn.active {
+  border-color: #C8F060;
+  color: #C8F060;
+  background: rgba(200, 240, 96, 0.07);
+}
+
+/* Shop card */
+.shop-card {
+  border: 1px solid rgba(240,237,230,0.08);
+  border-radius: 2px;
+  padding: 20px 24px;
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.shop-card:hover {
+  background: rgba(200, 240, 96, 0.05);
+  border-color: rgba(200, 240, 96, 0.2);
 }
