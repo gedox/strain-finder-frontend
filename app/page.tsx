@@ -119,15 +119,26 @@ function HomePageInner() {
           Updated automatically. No guessing.
         </p>
 
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 16 }}>
           <a
             href="/browse"
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 16px",
               fontSize: 12,
-              color: "rgba(200,240,96,0.6)",
+              fontWeight: 500,
+              color: "#C8F060",
+              background: "transparent",
+              border: "1px solid rgba(200,240,96,0.4)",
+              borderRadius: 4,
               textDecoration: "none",
               letterSpacing: "0.05em",
+              transition: "border-color 0.15s, color 0.15s",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(200,240,96,0.8)"; e.currentTarget.style.color = "#d4f88a"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(200,240,96,0.4)"; e.currentTarget.style.color = "#C8F060"; }}
           >
             Browse all shops &amp; strains &rarr;
           </a>
