@@ -1,6 +1,7 @@
 import { getShopMenu } from "@/lib/api";
 import { notFound } from "next/navigation";
 import { CAT_COLORS } from "@/lib/colors";
+import { formatShopName } from "@/lib/format";
 
 export const revalidate = 3600;
 
@@ -60,7 +61,7 @@ export default async function ShopPage({ params }: PageProps) {
           fontWeight: 700,
           marginBottom: 8,
         }}>
-          {shop.name}
+          {formatShopName(shop.name)}
         </h1>
 
         {shop.address && (

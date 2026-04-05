@@ -2,6 +2,7 @@
 
 import type { StrainResult } from "@/lib/api";
 import CategoryPill from "./CategoryPill";
+import { formatShopName } from "@/lib/format";
 
 interface Props {
   results: StrainResult[];
@@ -46,7 +47,7 @@ export default function StrainTable({ results, query }: Props) {
                     fontFamily: "'Playfair Display', serif",
                     fontWeight: 700,
                   }}>
-                    {r.shop_name}
+                    {formatShopName(r.shop_name)}
                   </span>
                   <CategoryPill category={r.category} />
                 </div>

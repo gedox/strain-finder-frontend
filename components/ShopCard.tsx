@@ -1,6 +1,7 @@
 "use client";
 
 import type { Shop } from "@/lib/api";
+import { formatShopName } from "@/lib/format";
 
 interface Props {
   shop: Shop;
@@ -18,7 +19,7 @@ export default function ShopCard({ shop }: Props) {
               fontWeight: 700,
               marginBottom: 6,
             }}>
-              {shop.name}
+              {formatShopName(shop.name)}
             </div>
             {shop.address && (
               <div style={{ fontSize: 12, color: "rgba(240,237,230,0.4)" }}>
