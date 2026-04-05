@@ -6,9 +6,10 @@ import { searchStrains, getPopular, getStatus } from "@/lib/api";
 import type { StrainResult, PopularStrain, StatusInfo } from "@/lib/api";
 import SearchInput from "@/components/SearchInput";
 import StrainTable from "@/components/StrainTable";
-import CategoryFilter from "@/components/CategoryFilter";
+import PriceSortToggle from "@/components/PriceSortToggle";
 import PopularStrains from "@/components/PopularStrains";
 import LoadingBar from "@/components/LoadingBar";
+import { sortByPrice, type PriceSort } from "@/lib/sort";
 
 export default function HomePage() {
   return (
@@ -28,6 +29,7 @@ function HomePageInner() {
   const [status, setStatus] = useState<StatusInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [priceSort, setPriceSort] = useState<PriceSort>("off");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -39,6 +41,7 @@ function HomePageInner() {
     if (!q.trim()) {
       setResults(null);
       setActiveFilter("all");
+      setPriceSort("off");
       return;
     }
     setLoading(true);
@@ -46,6 +49,7 @@ function HomePageInner() {
       const data = await searchStrains(q);
       setResults(data);
       setActiveFilter("all");
+      setPriceSort("off");
     } catch {
       setResults([]);
     } finally {
@@ -69,10 +73,12 @@ function HomePageInner() {
     doSearch(name);
   };
 
-  const filtered =
-    results && activeFilter !== "all"
-      ? results.filter((r) => r.category === activeFilter)
-      : results;
+  const filtered = results
+    ? sortByPrice(
+        activeFilter !== "all" ? results.filter((r) => r.category === activeFilter) : results,
+        priceSort,
+      )
+    : null;
 
   const categories = results
     ? ["all", ...Array.from(new Set(results.map((r) => r.category)))]
@@ -156,12 +162,25 @@ function HomePageInner() {
       {loading && <LoadingBar />}
 
       {/* Category filters */}
+      {results && results.length > 0 && categories.length >= 3 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              className={`filter-btn ${activeFilter === cat ? "active" : ""}`}
+              onClick={() => setActiveFilter(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Price sort (own row, distinct shape) */}
       {results && results.length > 0 && (
-        <CategoryFilter
-          categories={categories}
-          active={activeFilter}
-          onSelect={setActiveFilter}
-        />
+        <div style={{ marginBottom: 24 }}>
+          <PriceSortToggle value={priceSort} onChange={setPriceSort} />
+        </div>
       )}
 
       {/* Results */}

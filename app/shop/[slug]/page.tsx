@@ -1,7 +1,7 @@
 import { getShopMenu } from "@/lib/api";
 import { notFound } from "next/navigation";
-import { CAT_COLORS } from "@/lib/colors";
 import { formatShopName } from "@/lib/format";
+import ShopMenuView from "@/components/ShopMenuView";
 
 export const revalidate = 3600;
 
@@ -21,7 +21,6 @@ export default async function ShopPage({ params }: PageProps) {
   if (!shop) notFound();
 
   const categoryOrder = ["sativa", "indica", "hybrid", "hash", "edible", "pre-roll", "other"];
-  const menuCategories = categoryOrder.filter((cat) => shop.menu[cat]?.length > 0);
 
   return (
     <>
@@ -85,101 +84,7 @@ export default async function ShopPage({ params }: PageProps) {
       </div>
 
       {/* Menu by category */}
-      {menuCategories.length === 0 ? (
-        <div style={{ padding: "40px 0", color: "rgba(240,237,230,0.3)", fontSize: 13 }}>
-          No menu data available for this shop yet.
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          {menuCategories.map((cat) => {
-            const colors = CAT_COLORS[cat] || CAT_COLORS.other;
-            const strains = shop.menu[cat];
-
-            return (
-              <div key={cat}>
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 12,
-                }}>
-                  <span
-                    style={{
-                      padding: "3px 10px",
-                      borderRadius: 100,
-                      fontSize: 11,
-                      fontWeight: 500,
-                      letterSpacing: "0.05em",
-                      textTransform: "uppercase",
-                      background: colors.bg,
-                      color: colors.text,
-                    }}
-                  >
-                    {cat}
-                  </span>
-                  <span style={{ fontSize: 11, color: "rgba(240,237,230,0.25)" }}>
-                    {strains.length} strain{strains.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {strains.map((strain) => (
-                    <div
-                      key={strain.id}
-                      style={{
-                        border: "1px solid rgba(240,237,230,0.08)",
-                        borderRadius: 2,
-                        padding: "14px 20px",
-                        display: "grid",
-                        gridTemplateColumns: "1fr auto",
-                        alignItems: "center",
-                        gap: 12,
-                        background: "rgba(255,255,255,0.02)",
-                      }}
-                    >
-                      <div>
-                        <div style={{
-                          fontSize: 15,
-                          fontFamily: "'Playfair Display', serif",
-                          fontWeight: 700,
-                          marginBottom: 4,
-                        }}>
-                          {strain.name}
-                        </div>
-                        {strain.notes && (
-                          <div style={{ fontSize: 11, color: "rgba(240,237,230,0.35)" }}>
-                            {strain.notes}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        {strain.price_per_gram != null ? (
-                          <>
-                            <div style={{ fontSize: 20, fontWeight: 500, color: "#C8F060" }}>
-                              &euro;{strain.price_per_gram}
-                            </div>
-                            <div style={{
-                              fontSize: 10,
-                              color: "rgba(240,237,230,0.3)",
-                              letterSpacing: "0.05em",
-                            }}>
-                              per gram
-                            </div>
-                          </>
-                        ) : (
-                          <div style={{ fontSize: 12, color: "rgba(240,237,230,0.2)" }}>
-                            &mdash;
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <ShopMenuView menu={shop.menu} categoryOrder={categoryOrder} />
 
       {/* Footer */}
       <div style={{
