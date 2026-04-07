@@ -2,8 +2,9 @@
 
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { searchStrains, getPopular, getStatus } from "@/lib/api";
-import type { StrainResult, PopularStrain, StatusInfo } from "@/lib/api";
+import { searchStrains, getPopular, getStatus, getShops } from "@/lib/api";
+import type { StrainResult, PopularStrain, StatusInfo, Shop } from "@/lib/api";
+import { formatShopName } from "@/lib/format";
 import SearchInput from "@/components/SearchInput";
 import StrainTable from "@/components/StrainTable";
 import PriceSortToggle from "@/components/PriceSortToggle";
@@ -32,9 +33,26 @@ function HomePageInner() {
   const [priceSort, setPriceSort] = useState<PriceSort>("off");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [shopQuery, setShopQuery] = useState("");
+  const [shopOpen, setShopOpen] = useState(false);
+  const shopRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     getPopular().then(setPopular).catch(() => {});
     getStatus().then(setStatus).catch(() => {});
+    getShops().then(setShops).catch(() => {});
+  }, []);
+
+  // Close shop dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (shopRef.current && !shopRef.current.contains(e.target as Node)) {
+        setShopOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const doSearch = useCallback(async (q: string) => {
@@ -84,28 +102,129 @@ function HomePageInner() {
     ? ["all", ...Array.from(new Set(results.map((r) => r.category)))]
     : [];
 
+  const filteredShops = shopQuery.trim()
+    ? shops.filter((s) =>
+        formatShopName(s.name).toLowerCase().includes(shopQuery.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
   return (
     <>
       {/* Header */}
       <div style={{ marginBottom: 60 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-          <span style={{
-            fontSize: 11,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "rgba(200,240,96,0.7)",
-          }}>
-            Amsterdam
-          </span>
-          <span style={{ width: 32, height: 1, background: "rgba(200,240,96,0.3)", display: "inline-block" }} />
-          <span style={{
-            fontSize: 11,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "rgba(240,237,230,0.3)",
-          }}>
-            Strain Finder
-          </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{
+              fontSize: 11,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(200,240,96,0.7)",
+            }}>
+              Amsterdam
+            </span>
+            <span style={{ width: 32, height: 1, background: "rgba(200,240,96,0.3)", display: "inline-block" }} />
+            <span style={{
+              fontSize: 11,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(240,237,230,0.3)",
+            }}>
+              Strain Finder
+            </span>
+          </div>
+
+          {/* Coffeeshop search — top right */}
+          <div ref={shopRef} style={{ position: "relative" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "rgba(240,237,230,0.05)",
+                border: "1px solid rgba(200,240,96,0.4)",
+                borderRadius: 6,
+                padding: "5px 10px",
+                cursor: "text",
+                transition: "border-color 0.15s",
+                ...(shopOpen ? { borderColor: "rgba(200,240,96,0.4)" } : {}),
+              }}
+              onClick={() => setShopOpen(true)}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(240,237,230,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                value={shopQuery}
+                onChange={(e) => { setShopQuery(e.target.value); setShopOpen(true); }}
+                onFocus={() => setShopOpen(true)}
+                placeholder="Find a coffeeshop"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  color: "rgba(240,237,230,0.8)",
+                  fontSize: 12,
+                  letterSpacing: "0.02em",
+                  width: 130,
+                }}
+              />
+            </div>
+
+            {/* Dropdown results */}
+            {shopOpen && shopQuery.trim() && (
+              <div style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                right: 0,
+                width: 240,
+                background: "#1a1a18",
+                border: "1px solid rgba(240,237,230,0.1)",
+                borderRadius: 8,
+                overflow: "hidden",
+                zIndex: 100,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+              }}>
+                {filteredShops.length === 0 ? (
+                  <div style={{
+                    padding: "12px 14px",
+                    fontSize: 12,
+                    color: "rgba(240,237,230,0.3)",
+                  }}>
+                    No shops found
+                  </div>
+                ) : (
+                  filteredShops.map((shop) => (
+                    <a
+                      key={shop.slug}
+                      href={`/shop/${shop.slug}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "9px 14px",
+                        fontSize: 12,
+                        color: "rgba(240,237,230,0.75)",
+                        textDecoration: "none",
+                        transition: "background 0.12s",
+                        borderBottom: "1px solid rgba(240,237,230,0.04)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(200,240,96,0.07)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <span>{formatShopName(shop.name)}</span>
+                      <span style={{
+                        fontSize: 10,
+                        color: "rgba(240,237,230,0.25)",
+                      }}>
+                        {shop.strain_count} strains
+                      </span>
+                    </a>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <h1 style={{
