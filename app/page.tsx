@@ -133,7 +133,42 @@ function HomePageInner() {
             </span>
           </div>
 
-          {/* Coffeeshop search — top right */}
+          {/* Coffeeshop search + recent menus button — top right */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <a
+            href="/recent"
+            title="Menus updated in the last 5 days"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "5px 10px",
+              fontSize: 11,
+              color: "rgba(200,240,96,0.8)",
+              background: "rgba(200,240,96,0.06)",
+              border: "1px solid rgba(200,240,96,0.4)",
+              borderRadius: 6,
+              textDecoration: "none",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              transition: "border-color 0.15s, background 0.15s",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(200,240,96,0.8)";
+              e.currentTarget.style.background = "rgba(200,240,96,0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "rgba(200,240,96,0.4)";
+              e.currentTarget.style.background = "rgba(200,240,96,0.06)";
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <polyline points="12 7 12 12 15 14" />
+            </svg>
+            Recent
+          </a>
           <div ref={shopRef} style={{ position: "relative" }}>
             <div
               style={{
@@ -224,6 +259,7 @@ function HomePageInner() {
                 )}
               </div>
             )}
+          </div>
           </div>
         </div>
 

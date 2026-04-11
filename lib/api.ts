@@ -10,6 +10,25 @@ export interface StrainResult {
   shop_slug: string;
   shop_name: string;
   shop_city: string;
+  last_scraped_at: string | null;
+  menu_date: string | null;
+}
+
+export interface RecentMenu {
+  slug: string;
+  name: string;
+  address: string | null;
+  city: string;
+  menu_date: string | null;
+  scraped_at: string | null;
+  strain_count: number;
+}
+
+export interface RecentMenusResponse {
+  reference_time: string;
+  window_start: string;
+  days: number;
+  menus: RecentMenu[];
 }
 
 export interface PopularStrain {
@@ -84,3 +103,6 @@ export const getStatus = () =>
 
 export const getAllStrains = () =>
   apiFetch<PopularStrain[]>("/strains/all", { next: { revalidate: 3600 } });
+
+export const getRecentMenus = (days = 5) =>
+  apiFetch<RecentMenusResponse>(`/menus/recent?days=${days}`, { cache: "no-store" });

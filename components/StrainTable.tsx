@@ -56,9 +56,15 @@ export default function StrainTable({ results, query }: Props) {
                   color: "rgba(240,237,230,0.4)",
                   display: "flex",
                   gap: 16,
+                  flexWrap: "wrap",
                 }}>
                   <span>{r.name}</span>
                   {r.notes && <span>{r.notes}</span>}
+                  {r.last_scraped_at && (
+                    <span style={{ color: "rgba(200,240,96,0.5)" }}>
+                      Updated {new Date(r.last_scraped_at).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
