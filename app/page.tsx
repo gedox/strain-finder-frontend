@@ -34,14 +34,20 @@ function HomePageInner() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const [shops, setShops] = useState<Shop[]>([]);
+  const [shopsLoading, setShopsLoading] = useState(true);
   const [shopQuery, setShopQuery] = useState("");
   const [shopOpen, setShopOpen] = useState(false);
   const shopRef = useRef<HTMLDivElement>(null);
+  const shopsPromiseRef = useRef<Promise<Shop[]> | null>(null);
 
   useEffect(() => {
     getPopular().then(setPopular).catch(() => {});
     getStatus().then(setStatus).catch(() => {});
-    getShops().then(setShops).catch(() => {});
+    const p = getShops();
+    shopsPromiseRef.current = p;
+    p.then(setShops)
+      .catch(() => {})
+      .finally(() => setShopsLoading(false));
   }, []);
 
   // Close shop dropdown on outside click
@@ -103,9 +109,12 @@ function HomePageInner() {
     : [];
 
   const filteredShops = shopQuery.trim()
-    ? shops.filter((s) =>
-        formatShopName(s.name).toLowerCase().includes(shopQuery.toLowerCase())
-      ).slice(0, 8)
+    ? shops
+        .filter((s) => s.strain_count > 0)
+        .filter((s) =>
+          formatShopName(s.name).toLowerCase().includes(shopQuery.toLowerCase())
+        )
+        .slice(0, 8)
     : [];
 
   return (
@@ -176,12 +185,13 @@ function HomePageInner() {
                 alignItems: "center",
                 gap: 6,
                 background: "rgba(240,237,230,0.05)",
-                border: "1px solid rgba(200,240,96,0.4)",
+                borderWidth: 1,
+                borderStyle: "solid",
+                borderColor: "rgba(200,240,96,0.4)",
                 borderRadius: 6,
                 padding: "5px 10px",
                 cursor: "text",
                 transition: "border-color 0.15s",
-                ...(shopOpen ? { borderColor: "rgba(200,240,96,0.4)" } : {}),
               }}
               onClick={() => setShopOpen(true)}
             >
@@ -193,6 +203,30 @@ function HomePageInner() {
                 value={shopQuery}
                 onChange={(e) => { setShopQuery(e.target.value); setShopOpen(true); }}
                 onFocus={() => setShopOpen(true)}
+                onKeyDown={async (e) => {
+                  if (e.key !== "Enter" || !shopQuery.trim()) return;
+                  const q = shopQuery.trim().toLowerCase();
+                  const pick = (list: Shop[]) => {
+                    const matches = list.filter((s) =>
+                      formatShopName(s.name).toLowerCase().includes(q),
+                    );
+                    if (matches.length === 0) return null;
+                    return (
+                      matches.find((s) => formatShopName(s.name).toLowerCase() === q) ??
+                      matches[0]
+                    );
+                  };
+                  const immediate = pick(shops);
+                  if (immediate) {
+                    window.location.href = `/shop/${immediate.slug}`;
+                    return;
+                  }
+                  if (shopsPromiseRef.current) {
+                    const loaded = await shopsPromiseRef.current.catch(() => [] as Shop[]);
+                    const match = pick(loaded);
+                    if (match) window.location.href = `/shop/${match.slug}`;
+                  }
+                }}
                 placeholder="Find a coffeeshop"
                 style={{
                   background: "transparent",
@@ -226,7 +260,7 @@ function HomePageInner() {
                     fontSize: 12,
                     color: "rgba(240,237,230,0.3)",
                   }}>
-                    No shops found
+                    {shopsLoading ? "Loading…" : "No shops found"}
                   </div>
                 ) : (
                   filteredShops.map((shop) => (
